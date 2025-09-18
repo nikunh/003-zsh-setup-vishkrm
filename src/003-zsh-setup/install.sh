@@ -273,20 +273,20 @@ cat > "$POST_INSTALL_FRAGMENT_SOURCE" << 'EOF'
 # 🔧 PowerLevel10k Restore Fragment (Post-Install Protection)
 # This fragment runs last (99- prefix) to restore PowerLevel10k after common-utils override
 
-# If PowerLevel10k is available but theme is wrong, restore it
+# Always check if PowerLevel10k is available and ensure it's properly configured
 if [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
-    # Check if current theme is NOT powerlevel10k
-    if [ -f "$HOME/.zshrc" ] && ! grep -q 'ZSH_THEME="powerlevel10k/powerlevel10k"' "$HOME/.zshrc"; then
-        echo "🔧 Restoring PowerLevel10k theme (common-utils override detected)"
-        
-        # Update theme in zshrc
+    echo "🎨 PowerLevel10k theme directory found - ensuring proper configuration"
+
+    # Always ensure the theme is set correctly (common-utils might override)
+    if [ -f "$HOME/.zshrc" ]; then
+        # Update theme in zshrc regardless of current setting
         if grep -q '^ZSH_THEME=' "$HOME/.zshrc"; then
             sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc"
         else
             echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> "$HOME/.zshrc"
         fi
-        
-        # Ensure P10k instant prompt is at the top
+
+        # Ensure P10k instant prompt is at the top of zshrc
         if ! grep -q "p10k-instant-prompt" "$HOME/.zshrc"; then
             # Create temp file with P10k instant prompt at the top
             cat > "/tmp/zshrc_with_p10k" << 'INNER_EOF'
@@ -299,7 +299,7 @@ INNER_EOF
             cat "$HOME/.zshrc" >> "/tmp/zshrc_with_p10k"
             mv "/tmp/zshrc_with_p10k" "$HOME/.zshrc"
         fi
-        
+
         # Ensure P10k config loading at the end
         if ! grep -q "source.*\.p10k.zsh" "$HOME/.zshrc"; then
             echo '' >> "$HOME/.zshrc"
@@ -307,12 +307,34 @@ INNER_EOF
             echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> "$HOME/.zshrc"
         fi
     fi
-    
+
+    # Ensure cache directory exists and try to initialize instant prompt
+    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
+
+    # Pre-generate P10k instant prompt cache if zsh is available
+    if command -v zsh >/dev/null 2>&1 && [ -f "$HOME/.p10k.zsh" ]; then
+        echo "🚀 Pre-generating PowerLevel10k instant prompt cache"
+        # Source the theme to initialize instant prompt
+        (
+            export ZSH_THEME="powerlevel10k/powerlevel10k"
+            export ZSH="$HOME/.oh-my-zsh"
+            # Try to initialize P10k without full shell
+            zsh -c "
+                source '$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme' 2>/dev/null || true
+                source '$HOME/.p10k.zsh' 2>/dev/null || true
+            " 2>/dev/null || echo "Could not pre-generate cache, will generate on first run"
+        )
+    fi
+
     # Always set ZSH_THEME for this session
     export ZSH_THEME="powerlevel10k/powerlevel10k"
-    
+
     # Load P10k configuration if available
     [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+    echo "✅ PowerLevel10k configuration complete"
+else
+    echo "⚠️  PowerLevel10k theme directory not found at $HOME/.oh-my-zsh/custom/themes/powerlevel10k"
 fi
 EOF
 
