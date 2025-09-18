@@ -68,23 +68,69 @@ timeout 300 git clone --depth=1 https://github.com/zsh-users/zsh-completions ${Z
 
 # Install Powerlevel10k theme (comprehensive installation)
 echo "Installing Powerlevel10k theme..."
-timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM}/themes/powerlevel10k || echo "powerlevel10k clone failed"
+
+# Ensure themes directory exists
+mkdir -p ${ZSH_CUSTOM}/themes
+
+# Install to skel first
+P10K_SKEL_DIR="${ZSH_CUSTOM}/themes/powerlevel10k"
+if [ ! -d "$P10K_SKEL_DIR" ]; then
+    echo "Cloning Powerlevel10k to skel directory..."
+    if timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_SKEL_DIR"; then
+        echo "✓ Powerlevel10k installed to skel successfully"
+    else
+        echo "✗ Powerlevel10k clone to skel failed"
+        # Try alternative download method
+        echo "Trying alternative download method..."
+        mkdir -p "$P10K_SKEL_DIR"
+        cd "$P10K_SKEL_DIR"
+        if curl -fsSL https://api.github.com/repos/romkatv/powerlevel10k/tarball | tar -xz --strip-components=1; then
+            echo "✓ Powerlevel10k downloaded via tarball successfully"
+        else
+            echo "✗ All Powerlevel10k installation methods failed"
+        fi
+        cd - > /dev/null
+    fi
+else
+    echo "✓ Powerlevel10k already exists in skel"
+fi
 
 # Also install Powerlevel10k for existing user if they exist (to handle both skel and user scenarios)
 if [ -d "$USER_HOME/.oh-my-zsh" ]; then
     USER_ZSH_CUSTOM="$USER_HOME/.oh-my-zsh/custom"
     P10K_USER_DIR="$USER_ZSH_CUSTOM/themes/powerlevel10k"
-    
+
     mkdir -p "$USER_ZSH_CUSTOM/themes"
-    
-    # Remove existing directory if it exists  
+
+    # Remove existing directory if it exists
     if [ -d "$P10K_USER_DIR" ]; then
         rm -rf "$P10K_USER_DIR"
     fi
-    
+
     echo "Installing Powerlevel10k to existing user directory..."
-    timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_USER_DIR" || echo "user powerlevel10k clone failed"
-    
+    if timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_USER_DIR"; then
+        echo "✓ Powerlevel10k installed to user directory successfully"
+    else
+        echo "✗ Powerlevel10k clone to user directory failed"
+        # Try copying from skel if available
+        if [ -d "$P10K_SKEL_DIR" ]; then
+            echo "Copying Powerlevel10k from skel to user directory..."
+            cp -r "$P10K_SKEL_DIR" "$P10K_USER_DIR"
+            echo "✓ Powerlevel10k copied from skel successfully"
+        else
+            # Try alternative download method
+            echo "Trying alternative download method for user directory..."
+            mkdir -p "$P10K_USER_DIR"
+            cd "$P10K_USER_DIR"
+            if curl -fsSL https://api.github.com/repos/romkatv/powerlevel10k/tarball | tar -xz --strip-components=1; then
+                echo "✓ Powerlevel10k downloaded via tarball to user directory successfully"
+            else
+                echo "✗ All Powerlevel10k installation methods failed for user directory"
+            fi
+            cd - > /dev/null
+        fi
+    fi
+
     # Fix ownership
     if [ "$USER" != "$USERNAME" ]; then
         chown -R ${USERNAME}:${USERNAME} "$P10K_USER_DIR" 2>/dev/null || chown -R ${USERNAME}:users "$P10K_USER_DIR" 2>/dev/null || true
