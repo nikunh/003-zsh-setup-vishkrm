@@ -1,53 +1,10 @@
 echo "Running $(basename "$0")"
 
-# # set -o ignoreeof
-# if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-#         echo "setting for ubuntu. no aliases"
-# else
-#   alias vi='/Applications/MacVim.app/Contents/MacOS/Vim '
-#   alias sshsynology='ssh nikun@192.168.3.214 -p 2222 -i ~/.ssh/others/synnas1821/nikun.net.gitea_id_ed25519'
-#   alias vim='/Applications/MacVim.app/Contents/MacOS/Vim '
-#   alias rm='trash -F'
-#   alias xfirefox='docker run -it \
-#     --memory 2gb \
-#     --security-opt seccomp=unconfined `#optional` \
-#     -e PUID=1000 \
-#     -e PGID=1000 \
-#     -e TZ=Etc/UTC \
-#     -p 3000:3000 \
-#     -v ${HOME}/.config/firefox-config:/config \
-#     --shm-size="1gb" \
-#     --restart unless-stopped \
-#     -e DISPLAY="192.168.3.247:0" \
-#     lscr.io/linuxserver/firefox:latest'
-#     alias xwebtop='docker run -it \
-#         --name=webtop \
-#         -e TZ=Etc/UTC \
-#         -e TITLE=Webtop `#optional` \
-#         --memory 2gb \
-#         --security-opt seccomp=unconfined `#optional` \
-#         -e PUID=1000 \
-#         -e PGID=1000 \
-#         -e TZ=Etc/UTC \
-#         -p 3001:3001 \
-#         -e TITLE=Webtop `#optional` \
-#         -v ${HOME}/.config/firefox-config:/config \
-#         --shm-size="1gb" \
-#         --restart unless-stopped \
-#         -e DISPLAY="192.168.3.247:0" \
-#         lscr.io/linuxserver/webtop:latest'
-
-  
-# fi
-
-# create a python3 based snake game, use TUI library to create a nice professional interface, create requirements.txt for required modules, in the end create the venv, cd into code directory, swtich to venv and test venv is active, install requirements  and last run the program. This is an ubuntu 24.04 system, hence make sure to switch to venv before running any pip or python commands.
-
-
-#Set aliases for system usage
+# Generic system aliases - safe for public use
 alias vi="nvim"
 alias vim="nvim"
 
-#SSH related aliases:
+# Generic SSH helper function (no private IPs)
 ssh_list_recognised_hosts() {
   # Find all config files (main + included)
   find ~/.ssh -type f -name "config*" -exec grep -h '^Host ' {} \; |
@@ -56,95 +13,55 @@ ssh_list_recognised_hosts() {
     sort -u                                # Sort uniquely
 }
 
-cloudflare-token-set() { export TUNNEL_TOKEN=$(lpass show --password cloudflare.com | awk '{print $NF}') }
-cloudflare-run() { cloudflared tunnel run --token `lpass show --password cloudflare.com | awk '{print $NF}'` > /dev/null 2>&1 & }
-lpass-login() { lpass login $(gum input --placeholder "Enter your LastPass email ID") }
-aider-watch-openrouter() {OPENROUTER_API_KEY= aider --model openrouter/meta-llama/llama-3.2-1b-instruct:free --watch-files .}
-aider-edit() { AIDER_EDITOR=nvim }
-openrouter_key_export() { export OPENROUTER_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.openrouter[0].key' | grep -v null| sed -e 's/"//g') }
-anthropic_key_export() { export ANTHROPIC_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.anthropic[0].key '| grep -v null| sed -e 's/"//g') }
-ssh_synnas_shell() { sshpass -p "$(lpass show --password '192.168.3.214:5000/#!/home - DSM')" ssh nikun@192.168.3.214 -p 2223 }
+# Generic development aliases
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
 
-# Key aliases for AI usage
-#======OLLAMA=====================================================================
-# ollama_url="http://192.168.3.185:11434"
- ollama_code_model="ollama/deepseek-coder-v2"
-# alias aider-chat="pipx run aider-chat --edit-format whole"
-# alias aider-chat="OLLAMA_IP=\"$ollama_url\" aider --model $ollama_code_model --browser ."
-# alias aider-watch="OLLAMA_IP=\"$ollama_url\" aider --model $ollama_code_model --watch-files ."
-# alias aider-chat="OLLAMA_IP=\"$ollama_url\" aider --model $ollama_code_model ."
+# Git aliases
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline'
+alias gd='git diff'
 
+# Docker aliases (generic)
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias dimg='docker images'
+alias dlog='docker logs'
+alias dexec='docker exec -it'
 
-#======OPENROUTER=====================================================================
-babaji_aider_watch_with_OPENROUTER_API_KEY() {
-  export OPENROUTER_API_KEY=$(lpass show --notes AI_keys | yq '.AI | to_entries[].value.openrouter[0].key' | grep -v null | sed -e 's/"//g')
-  aider --model openrouter/meta-llama/llama-3.1-405b-instruct:free --watch-files .
+# Development helpers
+alias ports='netstat -tulanp'
+alias myip='curl -s ifconfig.me'
+alias reload='source ~/.zshrc'
+
+# Generic helper function
+help_aliases() {
+  echo "Available aliases in this environment:"
+  echo "====================================="
+  echo ""
+  echo "Editor:"
+  echo "  vi, vim       - Launch neovim"
+  echo ""
+  echo "Git shortcuts:"
+  echo "  gs, ga, gc, gp, gl, gd - Common git commands"
+  echo ""
+  echo "Docker shortcuts:"
+  echo "  dps, dpsa, dimg, dlog, dexec - Common docker commands"
+  echo ""
+  echo "System helpers:"
+  echo "  ll, la, l     - Directory listings"
+  echo "  ports         - Show network ports"
+  echo "  myip          - Show external IP"
+  echo "  reload        - Reload shell configuration"
+  echo ""
+  echo "Functions:"
+  echo "  ssh_list_recognised_hosts - List SSH hosts from config"
+  echo "  help_aliases              - Show this help"
 }
 
-babaji_aider_watch_prompt_with_OPENROUTER_API_KEY() {
-  if [[ ! -f prompt.txt ]]; then
-    echo "Error: prompt.txt not found."
-    return 1
-  fi
-  export OPENROUTER_API_KEY=$(lpass show --notes AI_keys | yq '.AI | to_entries[].value.openrouter[0].key' | grep -v null | sed -e 's/"//g')
-  local test_cmd=$(grep 'test_cmd:' prompt.txt | cut -d'"' -f2)
-  local watch_patterns=$(grep 'watch_patterns:' prompt.txt | cut -d'[' -f2 | cut -d']' -f1 | tr -d ' ')
-  if [[ -z "$test_cmd" || -z "$watch_patterns" ]]; then
-    echo "Error: Missing test_cmd or watch_patterns in prompt.txt."
-    return 1
-  fi
-  aider --auto-test --test-cmd "$test_cmd" --message-file prompt.txt --model openrouter/deepseek/deepseek-chat-v3-0324:free --watch-files "$watch_patterns"
-}
-
-
-alias babaji_export_OPENROUTER_API_KEY="export OPENROUTER_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.openrouter[0].key' | grep -v null| sed -e 's/"//g')"
-#======GEMINI=====================================================================
-babaji_aider_watch_with_GEMINI_API_KEY() {
-  export GEMINI_API_KEY=$(lpass show --notes AI_keys | yq '.AI | to_entries[].value.Gemini[0].key' | grep -v null | sed -e 's/"//g')
-  aider --model gemini-exp  --watch-files .
-}
-
-alias babaji_export_GEMINI_API_KEY="export GEMINI_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.Gemini[0].key' | grep -v null| sed -e 's/"//g')"
-
-# create alias as a help manual that shows all exported and aliased keys from this file, with short documentation to use, and also lets users search for and run one of the aliases or exports in this file
-babaji() {
-  echo 'This is a help manual for all exported and aliased keys from this file.'
-  echo 'You can search for and run one of the aliases or exports in this file.'
-  grep -E '^alias|^export|^\w+\(\)\s*\{' ~/.zshrc | sed -e 's/alias //g' -e 's/export //g' -e 's/() {$//' | awk '{print $1}'
-}
-
-#  ANTHROPIC_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.Gemini[0].key' | grep -v null| sed -e 's/"//g') aider --model gemini/gemini-1.5-pro-latest --watch-files .
-
-# OLLAMA_IP="${ollama_url}" aider --model ollama/deepseek-coder-v2 --watch-files .
-
-# CODESTRAL_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.mistral[0].key' | grep -v null| sed -e 's/"//g') aider --model codestral/codestral-latest  --watch-files .
-alias sshsynology='ssh nikun@192.168.3.214 -p 2222 -i ~/.ssh/others/synnas1821/nikun.net.gitea_id_ed25519'
-alias rm='trash -F'
-alias xfirefox='docker run -it \
---memory 2gb \
---security-opt seccomp=unconfined `#optional` \
--e PUID=1000 \
--e PGID=1000 \
--e TZ=Etc/UTC \
--p 3000:3000 \
--v ${HOME}/.config/firefox-config:/config \
---shm-size="1gb" \
---restart unless-stopped \
--e DISPLAY="192.168.3.247:0" \
-lscr.io/linuxserver/firefox:latest'
-alias xwebtop='docker run -it \
---name=webtop \
--e TZ=Etc/UTC \
--e TITLE=Webtop `#optional` \
---memory 2gb \
---security-opt seccomp=unconfined `#optional` \
--e PUID=1000 \
--e PGID=1000 \
--e TZ=Etc/UTC \
--p 3001:3001 \
--e TITLE=Webtop `#optional` \
--v ${HOME}/.config/firefox-config:/config \
---shm-size="1gb" \
---restart unless-stopped \
--e DISPLAY="192.168.3.247:0" \
-lscr.io/linuxserver/webtop:latest'
+# Note: Personal aliases and credentials have been moved to a private feature
+# They can be dynamically loaded when connected to private infrastructure
