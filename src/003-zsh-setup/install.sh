@@ -286,4 +286,29 @@ fi
 
 echo "PowerLevel10k protection fragment created successfully."
 
+# FINAL OVERRIDE: Force PowerLevel10k theme after all other features
+echo "Creating final PowerLevel10k override..."
+if [ -d "$USER_HOME" ]; then
+    # Force theme change in existing user's zshrc
+    if [ -f "$USER_HOME/.zshrc" ]; then
+        # Replace any existing theme with PowerLevel10k
+        sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$USER_HOME/.zshrc"
+
+        # Add P10k config loading if not present
+        if ! grep -q "source.*\.p10k.zsh" "$USER_HOME/.zshrc"; then
+            echo '' >> "$USER_HOME/.zshrc"
+            echo '# Load PowerLevel10k configuration' >> "$USER_HOME/.zshrc"
+            echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> "$USER_HOME/.zshrc"
+        fi
+
+        echo "Forced PowerLevel10k theme in $USER_HOME/.zshrc"
+    fi
+fi
+
+# Also update skel for new users
+if [ -f "$SKEL_DIR/.zshrc" ]; then
+    sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$SKEL_DIR/.zshrc"
+    echo "Updated PowerLevel10k theme in $SKEL_DIR/.zshrc"
+fi
+
 echo "=== ZSH SETUP COMPLETE ==="
