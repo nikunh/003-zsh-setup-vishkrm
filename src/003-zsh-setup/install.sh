@@ -68,69 +68,23 @@ timeout 300 git clone --depth=1 https://github.com/zsh-users/zsh-completions ${Z
 
 # Install Powerlevel10k theme (comprehensive installation)
 echo "Installing Powerlevel10k theme..."
-
-# Ensure themes directory exists
-mkdir -p ${ZSH_CUSTOM}/themes
-
-# Install to skel first
-P10K_SKEL_DIR="${ZSH_CUSTOM}/themes/powerlevel10k"
-if [ ! -d "$P10K_SKEL_DIR" ]; then
-    echo "Cloning Powerlevel10k to skel directory..."
-    if timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_SKEL_DIR"; then
-        echo "✓ Powerlevel10k installed to skel successfully"
-    else
-        echo "✗ Powerlevel10k clone to skel failed"
-        # Try alternative download method
-        echo "Trying alternative download method..."
-        mkdir -p "$P10K_SKEL_DIR"
-        cd "$P10K_SKEL_DIR"
-        if curl -fsSL https://api.github.com/repos/romkatv/powerlevel10k/tarball | tar -xz --strip-components=1; then
-            echo "✓ Powerlevel10k downloaded via tarball successfully"
-        else
-            echo "✗ All Powerlevel10k installation methods failed"
-        fi
-        cd - > /dev/null
-    fi
-else
-    echo "✓ Powerlevel10k already exists in skel"
-fi
+timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM}/themes/powerlevel10k || echo "powerlevel10k clone failed"
 
 # Also install Powerlevel10k for existing user if they exist (to handle both skel and user scenarios)
 if [ -d "$USER_HOME/.oh-my-zsh" ]; then
     USER_ZSH_CUSTOM="$USER_HOME/.oh-my-zsh/custom"
     P10K_USER_DIR="$USER_ZSH_CUSTOM/themes/powerlevel10k"
-
+    
     mkdir -p "$USER_ZSH_CUSTOM/themes"
-
-    # Remove existing directory if it exists
+    
+    # Remove existing directory if it exists  
     if [ -d "$P10K_USER_DIR" ]; then
         rm -rf "$P10K_USER_DIR"
     fi
-
+    
     echo "Installing Powerlevel10k to existing user directory..."
-    if timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_USER_DIR"; then
-        echo "✓ Powerlevel10k installed to user directory successfully"
-    else
-        echo "✗ Powerlevel10k clone to user directory failed"
-        # Try copying from skel if available
-        if [ -d "$P10K_SKEL_DIR" ]; then
-            echo "Copying Powerlevel10k from skel to user directory..."
-            cp -r "$P10K_SKEL_DIR" "$P10K_USER_DIR"
-            echo "✓ Powerlevel10k copied from skel successfully"
-        else
-            # Try alternative download method
-            echo "Trying alternative download method for user directory..."
-            mkdir -p "$P10K_USER_DIR"
-            cd "$P10K_USER_DIR"
-            if curl -fsSL https://api.github.com/repos/romkatv/powerlevel10k/tarball | tar -xz --strip-components=1; then
-                echo "✓ Powerlevel10k downloaded via tarball to user directory successfully"
-            else
-                echo "✗ All Powerlevel10k installation methods failed for user directory"
-            fi
-            cd - > /dev/null
-        fi
-    fi
-
+    timeout 300 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_USER_DIR" || echo "user powerlevel10k clone failed"
+    
     # Fix ownership
     if [ "$USER" != "$USERNAME" ]; then
         chown -R ${USERNAME}:${USERNAME} "$P10K_USER_DIR" 2>/dev/null || chown -R ${USERNAME}:users "$P10K_USER_DIR" 2>/dev/null || true
@@ -273,20 +227,20 @@ cat > "$POST_INSTALL_FRAGMENT_SOURCE" << 'EOF'
 # 🔧 PowerLevel10k Restore Fragment (Post-Install Protection)
 # This fragment runs last (99- prefix) to restore PowerLevel10k after common-utils override
 
-# Always check if PowerLevel10k is available and ensure it's properly configured
+# If PowerLevel10k is available but theme is wrong, restore it
 if [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
-    echo "🎨 PowerLevel10k theme directory found - ensuring proper configuration"
-
-    # Always ensure the theme is set correctly (common-utils might override)
-    if [ -f "$HOME/.zshrc" ]; then
-        # Update theme in zshrc regardless of current setting
+    # Check if current theme is NOT powerlevel10k
+    if [ -f "$HOME/.zshrc" ] && ! grep -q 'ZSH_THEME="powerlevel10k/powerlevel10k"' "$HOME/.zshrc"; then
+        echo "🔧 Restoring PowerLevel10k theme (common-utils override detected)"
+        
+        # Update theme in zshrc
         if grep -q '^ZSH_THEME=' "$HOME/.zshrc"; then
             sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.zshrc"
         else
             echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> "$HOME/.zshrc"
         fi
-
-        # Ensure P10k instant prompt is at the top of zshrc
+        
+        # Ensure P10k instant prompt is at the top
         if ! grep -q "p10k-instant-prompt" "$HOME/.zshrc"; then
             # Create temp file with P10k instant prompt at the top
             cat > "/tmp/zshrc_with_p10k" << 'INNER_EOF'
@@ -299,7 +253,7 @@ INNER_EOF
             cat "$HOME/.zshrc" >> "/tmp/zshrc_with_p10k"
             mv "/tmp/zshrc_with_p10k" "$HOME/.zshrc"
         fi
-
+        
         # Ensure P10k config loading at the end
         if ! grep -q "source.*\.p10k.zsh" "$HOME/.zshrc"; then
             echo '' >> "$HOME/.zshrc"
@@ -307,34 +261,12 @@ INNER_EOF
             echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> "$HOME/.zshrc"
         fi
     fi
-
-    # Ensure cache directory exists and try to initialize instant prompt
-    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
-
-    # Pre-generate P10k instant prompt cache if zsh is available
-    if command -v zsh >/dev/null 2>&1 && [ -f "$HOME/.p10k.zsh" ]; then
-        echo "🚀 Pre-generating PowerLevel10k instant prompt cache"
-        # Source the theme to initialize instant prompt
-        (
-            export ZSH_THEME="powerlevel10k/powerlevel10k"
-            export ZSH="$HOME/.oh-my-zsh"
-            # Try to initialize P10k without full shell
-            zsh -c "
-                source '$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme' 2>/dev/null || true
-                source '$HOME/.p10k.zsh' 2>/dev/null || true
-            " 2>/dev/null || echo "Could not pre-generate cache, will generate on first run"
-        )
-    fi
-
+    
     # Always set ZSH_THEME for this session
     export ZSH_THEME="powerlevel10k/powerlevel10k"
-
+    
     # Load P10k configuration if available
     [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
-
-    echo "✅ PowerLevel10k configuration complete"
-else
-    echo "⚠️  PowerLevel10k theme directory not found at $HOME/.oh-my-zsh/custom/themes/powerlevel10k"
 fi
 EOF
 
@@ -353,30 +285,5 @@ if [ -d "$USER_HOME" ]; then
 fi
 
 echo "PowerLevel10k protection fragment created successfully."
-
-# FINAL OVERRIDE: Force PowerLevel10k theme after all other features
-echo "Creating final PowerLevel10k override..."
-if [ -d "$USER_HOME" ]; then
-    # Force theme change in existing user's zshrc
-    if [ -f "$USER_HOME/.zshrc" ]; then
-        # Replace any existing theme with PowerLevel10k
-        sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$USER_HOME/.zshrc"
-
-        # Add P10k config loading if not present
-        if ! grep -q "source.*\.p10k.zsh" "$USER_HOME/.zshrc"; then
-            echo '' >> "$USER_HOME/.zshrc"
-            echo '# Load PowerLevel10k configuration' >> "$USER_HOME/.zshrc"
-            echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> "$USER_HOME/.zshrc"
-        fi
-
-        echo "Forced PowerLevel10k theme in $USER_HOME/.zshrc"
-    fi
-fi
-
-# Also update skel for new users
-if [ -f "$SKEL_DIR/.zshrc" ]; then
-    sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$SKEL_DIR/.zshrc"
-    echo "Updated PowerLevel10k theme in $SKEL_DIR/.zshrc"
-fi
 
 echo "=== ZSH SETUP COMPLETE ==="

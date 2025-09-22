@@ -1,7 +1,7 @@
 {
   "id": "003-zsh-setup",
-  "version": "0.0.4",
-  "name": "Zsh + Oh My Zsh Setup",
-  "description": "Installs Zsh, Oh My Zsh, and a standard set of plugins and themes with fragment system (sanitized version without personal aliases).",
-  "installsAfter": ["ghcr.io/devcontainers/features/common-utils", "ghcr.io/nikunh/002-user-setup-vishkrm/002-user-setup"]
+  "version": "0.0.2",
+  "name": "Basic Zsh Setup (Experimental)",
+  "description": "Basic Zsh setup for 003-zsh-setup feature",
+  "installsAfter": ["ghcr.io/nikunh/001-dev-packages-vishkrm/001-dev-packages", "ghcr.io/nikunh/002-user-setup-vishkrm/002-user-setup"]
 }

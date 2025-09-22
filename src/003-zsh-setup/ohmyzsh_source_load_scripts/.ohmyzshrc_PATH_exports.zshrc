@@ -8,7 +8,7 @@ export ANDROID_HOME=$HOME/adt-bundle-mac-x86_64-20140702/sdk/
 export GPG_TTY=$(tty)
 
 
-export PATH="/Users/nikun.hotta/.local/aws-cli/:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Users/nikun.hotta//bin:/Users/nikun.hotta/go/bin/"
+export PATH="${LOCAL_USER_HOME}/.local/aws-cli/:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:${LOCAL_USER_BIN}:${LOCAL_USER_GO_BIN}/"
 export PATH="$PATH:$HOME/bin/:/usr/local/deployd/bin"
 export PATH="/usr/local/opt/ruby/bin:/opt/homebrew/bin/:$PATH"
 export PATH="/usr/local/sbin:$PATH"
