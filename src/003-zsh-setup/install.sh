@@ -8,6 +8,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 FEATURE_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Token fix test - trigger automation Mon Sep 23 22:10:00 BST 2025
 SKEL_DIR="/etc/skel"
 ZSH="${SKEL_DIR}/.oh-my-zsh"
 USERNAME=${USERNAME:-"babaji"}
