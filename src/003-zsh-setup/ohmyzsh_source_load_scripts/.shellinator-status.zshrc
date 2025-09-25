@@ -42,15 +42,11 @@ get_shellinator_branch() {
         fi
     fi
 
-    # Format the result
-    if [[ "$git_remote" == "nikunh/shellinator" && "$branch_name" == "master" ]]; then
-        echo "github"  # Short form for official
-    elif [[ "$git_remote" == "local" ]]; then
-        echo "local"
-    elif [[ "$git_remote" == "devcontainer" ]]; then
-        echo "devpod"
+    # Always show branch name (this replaces the personality system)
+    if [[ -n "$branch_name" ]]; then
+        echo "$branch_name"
     else
-        echo "${git_remote}:${branch_name}"
+        echo "unknown"
     fi
 }
 
