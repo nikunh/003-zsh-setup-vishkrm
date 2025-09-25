@@ -64,6 +64,24 @@ function feature_updates_prompt_info() {
     get_feature_updates_prompt
 }
 
+# Universal prompt integration - add feature updates to RPROMPT
+function __feature_updates_precmd() {
+    local updates=$(get_feature_updates_prompt)
+    if [[ -n "$updates" ]]; then
+        # Add to right prompt, preserving existing content
+        if [[ -n "$RPROMPT" ]]; then
+            RPROMPT="$updates $RPROMPT"
+        else
+            RPROMPT="$updates"
+        fi
+    fi
+}
+
+# Hook into precmd for automatic prompt updates
+if [[ -z "${precmd_functions[(r)__feature_updates_precmd]}" ]]; then
+    precmd_functions+=(__feature_updates_precmd)
+fi
+
 # Auto-check on container startup (once per session)
 if [[ -z "$FEATURE_UPDATES_CHECKED" ]]; then
     export FEATURE_UPDATES_CHECKED=1
