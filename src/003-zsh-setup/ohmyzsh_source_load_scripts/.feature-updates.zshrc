@@ -31,6 +31,15 @@ check_updates() {
     fi
 }
 
+# Function to list installed features
+list_features() {
+    if [[ -f "$FEATURE_UPDATE_CHECKER" ]]; then
+        "$FEATURE_UPDATE_CHECKER" list
+    else
+        echo "Feature update checker not available"
+    fi
+}
+
 # Function to force update check
 force_update_check() {
     if [[ -f "$FEATURE_UPDATE_CHECKER" ]]; then
@@ -44,6 +53,7 @@ force_update_check() {
 # Aliases for convenience
 alias check-updates='check_updates'
 alias force-check='force_update_check'
+alias list-features='list_features'
 
 # Add to PowerLevel10k if available
 if [[ -n "$POWERLEVEL9K_VERSION" ]]; then
@@ -64,15 +74,26 @@ function feature_updates_prompt_info() {
     get_feature_updates_prompt
 }
 
+# Store original RPROMPT if not already stored
+if [[ -z "$ORIGINAL_RPROMPT_SAVED" ]]; then
+    export ORIGINAL_RPROMPT="$RPROMPT"
+    export ORIGINAL_RPROMPT_SAVED=1
+fi
+
 # Universal prompt integration - add feature updates to RPROMPT
 function __feature_updates_precmd() {
+    # Always start with the original RPROMPT
+    RPROMPT="$ORIGINAL_RPROMPT"
+
+    # Get feature updates
     local updates=$(get_feature_updates_prompt)
+
+    # Add updates to RPROMPT if available
     if [[ -n "$updates" ]]; then
-        # Add to right prompt, preserving existing content
         if [[ -n "$RPROMPT" ]]; then
-            RPROMPT="$updates $RPROMPT"
+            RPROMPT="${updates} ${RPROMPT}"
         else
-            RPROMPT="$updates"
+            RPROMPT="${updates}"
         fi
     fi
 }
