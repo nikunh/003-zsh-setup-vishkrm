@@ -1779,51 +1779,58 @@
   # greeting the user.
   #
   # Type `p10k help segment` for documentation and a more sophisticated example.
-  # Custom BlueGreen deployment status segment - Enhanced for personality system
+  # Shellinator Branch and Feature Status segment - Replaces personality system with git branches
   function prompt_bluegreen() {
-    local current_personality="default"
-    local display_name="default"
-    
-    # Check for personality-based current active (new system)
-    if [[ -f "/coordination/current-active-personality" ]]; then
-      current_personality=$(cat "/coordination/current-active-personality" 2>/dev/null || echo "default")
-      display_name="$current_personality"
-    # Fall back to version-based system (backward compatibility)
-    elif [[ -f "/coordination/current-active-version" ]]; then
-      current_personality=$(cat "/coordination/current-active-version" 2>/dev/null || echo "v1")
-      case "$current_personality" in
-        v1) display_name="default" ;;
-        v2) display_name="v2" ;;
-        *) display_name="$current_personality" ;;
-      esac
-    # Check environment variable as fallback
-    elif [[ -n "$DEVCONTAINER_PERSONALITY" ]]; then
-      current_personality="$DEVCONTAINER_PERSONALITY"
-      display_name="$current_personality"
+    # Path to the feature update checker script
+    local feature_checker="/usr/local/lib/babaji-config/modules/feature-update-checker.sh"
+
+    # Get shellinator branch
+    local branch_name=""
+    if [[ -d "/workspaces/shellinator/.git" ]]; then
+      cd "/workspaces/shellinator" 2>/dev/null && {
+        branch_name=$(git branch --show-current 2>/dev/null)
+        cd - >/dev/null
+      }
     fi
-    
-    # Show personality with appropriate color and icon
-    case "$current_personality" in
-      default|v1)
-        p10k segment -f 33 -b 4 -i '🔵' -t "$display_name"  # Blue for default/v1
+
+    # Fallback branch detection
+    if [[ -z "$branch_name" ]]; then
+      if [[ -f "/.devcontainer/devcontainer.json" ]]; then
+        local container_name=$(jq -r '.name // empty' /.devcontainer/devcontainer.json 2>/dev/null)
+        case "$container_name" in
+          *"GitHub"*) branch_name="master" ;;
+          *"Local"*) branch_name="local" ;;
+          *) branch_name="unknown" ;;
+        esac
+      else
+        branch_name="local"
+      fi
+    fi
+
+    # Get feature update status
+    local feature_status=""
+    if [[ -f "$feature_checker" ]]; then
+      feature_status=$("$feature_checker" prompt 2>/dev/null)
+    fi
+
+    # Build display text
+    local display_text="$branch_name"
+    if [[ -n "$feature_status" ]]; then
+      # Extract just the content inside brackets
+      local updates=$(echo "$feature_status" | sed 's/.*\[\(.*\)\].*/\1/')
+      display_text="$branch_name $updates"
+    fi
+
+    # Show branch with simple consistent styling
+    case "$branch_name" in
+      master|main)
+        p10k segment -f 15 -b 4 -i '🏠' -t "$display_text"  # Home icon for main branch
         ;;
-      v2)  
-        p10k segment -f 15 -b 2 -i '🟢' -t "$display_name"  # Green for v2
-        ;;
-      python*|*python*|ai*|*ai*)
-        p10k segment -f 11 -b 3 -i '🐍' -t "$display_name"  # Python icon for Python personalities
-        ;;
-      web*|*web*|node*|*node*|frontend*|*frontend*)
-        p10k segment -f 14 -b 6 -i '🌐' -t "$display_name"  # Web icon for web personalities
-        ;;
-      devops*|*devops*|k8s*|*k8s*|cloud*|*cloud*)
-        p10k segment -f 12 -b 5 -i '☁️' -t "$display_name"  # Cloud icon for DevOps personalities
-        ;;
-      minimal*|*minimal*|basic*|*basic*)
-        p10k segment -f 8 -b 0 -i '⚡' -t "$display_name"  # Lightning for minimal personalities
+      local|custom|unknown)
+        p10k segment -f 8 -b 0 -i '🏗️' -t "$display_text"  # Construction for local dev
         ;;
       *)
-        p10k segment -f 15 -b 2 -i '🎭' -t "$display_name"  # Theater mask for custom personalities
+        p10k segment -f 33 -b 4 -i '🔀' -t "$display_text"  # Git branch icon for all other branches
         ;;
     esac
   }
