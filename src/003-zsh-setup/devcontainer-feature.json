@@ -1,0 +1,10 @@
+{
+  "id": "003-zsh-setup",
+  "version": "0.0.1",
+  "name": "Basic Zsh Setup (Experimental)",
+  "description": "Basic Zsh setup for 003-zsh-setup feature",
+  "installsAfter": [
+    "ghcr.io/nikunh/001-dev-packages-vishkrm/001-dev-packages",
+    "ghcr.io/nikunh/002-user-setup-vishkrm/002-user-setup"
+  ]
+}
