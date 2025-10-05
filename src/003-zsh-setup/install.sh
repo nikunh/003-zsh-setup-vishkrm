@@ -1,4 +1,5 @@
-#!/usr/bin/env zsh
+#!/bin/sh
+# NOTE: Uses sh - configures zsh but script itself must run in sh
 set -e
 
 # Logging mechanism for debugging
