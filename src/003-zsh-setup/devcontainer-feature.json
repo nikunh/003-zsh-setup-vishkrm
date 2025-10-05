@@ -1,6 +1,6 @@
 {
   "id": "003-zsh-setup",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "name": "Basic Zsh Setup (Experimental)",
   "description": "Basic Zsh setup for 003-zsh-setup feature",
   "installsAfter": [
