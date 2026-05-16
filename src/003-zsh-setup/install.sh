@@ -24,8 +24,10 @@ FEATURE_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Token fix test - trigger automation Mon Sep 23 22:10:00 BST 2025
 SKEL_DIR="/etc/skel"
 ZSH="${SKEL_DIR}/.oh-my-zsh"
-USERNAME=${USERNAME:-"babaji"}
-USER_HOME="/home/${USERNAME}"
+USERNAME=${USERNAME:-"vishkrm"}
+# Resolve home from /etc/passwd (002-user-setup decides /Users/* vs /home/*)
+USER_HOME=$(getent passwd "${USERNAME}" 2>/dev/null | cut -d: -f6)
+[ -z "$USER_HOME" ] && USER_HOME="/home/${USERNAME}"
 
 echo "=== ZSH SETUP DEBUG INFO ==="
 echo "FEATURE_DIR: $FEATURE_DIR"
@@ -79,6 +81,7 @@ echo "Installing zsh plugins..."
 timeout 300 git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions || echo "zsh-autosuggestions clone failed"
 timeout 300 git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting || echo "zsh-syntax-highlighting clone failed"
 timeout 300 git clone --depth=1 https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM}/plugins/zsh-completions || echo "zsh-completions clone failed"
+timeout 300 git clone --depth=1 https://github.com/zdharma-continuum/history-search-multi-word ${ZSH_CUSTOM}/plugins/history-search-multi-word || echo "history-search-multi-word clone failed"
 
 # Install Powerlevel10k theme (comprehensive installation)
 echo "Installing Powerlevel10k theme..."
@@ -119,7 +122,26 @@ cp "${FEATURE_DIR}/p10k.zsh" "${SKEL_DIR}/.p10k.zsh"
 # Remove destination first to avoid circular copying
 rm -rf "${SKEL_DIR}/.ohmyzsh_source_load_scripts"
 cp -r "${FEATURE_DIR}/ohmyzsh_source_load_scripts" "${SKEL_DIR}/.ohmyzsh_source_load_scripts"
-cp "${FEATURE_DIR}/babaji.zsh-theme" "${ZSH_CUSTOM}/themes/babaji.zsh-theme"
+cp "${FEATURE_DIR}/vishkrm.zsh-theme" "${ZSH_CUSTOM}/themes/vishkrm.zsh-theme"
+
+# Install .zshenv (audit fix 2026-05-15): runs in EVERY zsh invocation including
+# non-interactive ssh sessions where .zshrc PATH exports don't reliably apply.
+# Guarantees critical paths so kubie/aider/nvim resolve from any zsh context.
+cat > "${SKEL_DIR}/.zshenv" << 'ZSHENV_EOF'
+# ~/.zshenv - audit fix 2026-05-15
+# zsh sources .zshenv in EVERY invocation (login, non-login, interactive, non-interactive).
+# This guarantees PATH essentials are available even when .zshrc fragments don't apply
+# their changes (issue observed in non-interactive ssh sessions).
+for _safe_path in '/opt/nvim/bin' "$HOME/.local/bin" '/usr/local/bin' '/usr/local/sbin'; do
+    if [ -d "$_safe_path" ]; then
+        case ":$PATH:" in
+            *":$_safe_path:"*) ;;
+            *) export PATH="$_safe_path:$PATH" ;;
+        esac
+    fi
+done
+unset _safe_path
+ZSHENV_EOF
 
 echo "Contents of /etc/skel after setup:"
 ls -la "${SKEL_DIR}/"
@@ -150,18 +172,22 @@ if [ -d "$USER_HOME" ]; then
   # Copy PowerLevel10k configuration
   cp "${SKEL_DIR}/.p10k.zsh" "$USER_HOME/"
   echo "Copied .p10k.zsh"
-  
+
+  # Copy .zshenv (audit fix 2026-05-15) — guarantees PATH in every zsh invocation
+  cp "${SKEL_DIR}/.zshenv" "$USER_HOME/"
+  echo "Copied .zshenv"
+
   # Copy source scripts (ensure target doesn't exist first)
   rm -rf "$USER_HOME/.ohmyzsh_source_load_scripts"
   cp -r "${SKEL_DIR}/.ohmyzsh_source_load_scripts" "$USER_HOME/"
   echo "Copied .ohmyzsh_source_load_scripts"
-  
+
   # Fix ownership - ensure the user group exists
   if ! getent group ${USERNAME} > /dev/null 2>&1; then
     echo "User group ${USERNAME} not found, using 'users' group"
-    chown -R ${USERNAME}:users "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.p10k.zsh" "$USER_HOME/.ohmyzsh_source_load_scripts"
+    chown -R ${USERNAME}:users "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.p10k.zsh" "$USER_HOME/.zshenv" "$USER_HOME/.ohmyzsh_source_load_scripts"
   else
-    chown -R ${USERNAME}:${USERNAME} "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.p10k.zsh" "$USER_HOME/.ohmyzsh_source_load_scripts"
+    chown -R ${USERNAME}:${USERNAME} "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.p10k.zsh" "$USER_HOME/.zshenv" "$USER_HOME/.ohmyzsh_source_load_scripts"
   fi
   echo "Fixed ownership"
   

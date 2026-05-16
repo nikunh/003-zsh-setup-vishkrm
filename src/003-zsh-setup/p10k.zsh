@@ -1782,7 +1782,7 @@
   # Shellinator Branch and Feature Status segment - Replaces personality system with git branches
   function prompt_bluegreen() {
     # Path to the feature update checker script
-    local feature_checker="/usr/local/lib/babaji-config/modules/feature-update-checker.sh"
+    local feature_checker="/usr/local/lib/vishkrm-config/modules/feature-update-checker.sh"
 
     # Get shellinator branch
     local branch_name=""

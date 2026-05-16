@@ -89,7 +89,7 @@ zstyle ':completion:*' format '%B%d%b'
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Only essential plugins to keep shell fast
-plugins=(git kubectl terraform tmux docker docker-compose zsh-autosuggestions zsh-syntax-highlighting shellinator-prompt)
+plugins=(git kubectl terraform tmux docker docker-compose zsh-autosuggestions zsh-syntax-highlighting history-search-multi-word shellinator-prompt)
 
 # ----------------------
 # Tmux Plugin Configuration
@@ -228,9 +228,9 @@ antigen apply
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   if [ ! -d "$HOME/.oh-my-zsh/plugins/history-search-multi-word" ]; then
     echo "history-search-multi-word not found. Installing..."
-    git clone https://github.com/zsh-users/zsh-history-substring-search $HOME/.oh-my-zsh/plugins/history-search-multi-word
+    git clone https://github.com/zdharma-continuum/history-search-multi-word $HOME/.oh-my-zsh/plugins/history-search-multi-word
   fi
-  source $HOME/.oh-my-zsh/plugins/history-search-multi-word/zsh-history-substring-search.zsh
+  source $HOME/.oh-my-zsh/plugins/history-search-multi-word/history-search-multi-word.plugin.zsh
   # complete -C '/usr/local/bin/aws_completer' aws
   source $HOME/.antigen/bundles/zsh-users/zsh-autosuggestions/zsh-autosuggestions.zsh
 # else
@@ -377,7 +377,7 @@ export OLLAMA_API_BASE=$ollama_url
 # eval "$@"
 # exec "$@"
 
-cd #it keeps landing into /hoeme otherwise, instead of landing in /home/babaji
+cd #cd to $HOME on shell start (without this some setups land in / or /hoeme)
 
 # ----------------------
 # Fragment System Note
@@ -416,3 +416,18 @@ fi
 # ----------------------
 # Load Powerlevel10k configuration
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+# ----------------------
+# Final PATH safety net (audit fix 2026-05-15)
+# Ensures essential dirs are on PATH regardless of what earlier fragments
+# did or didn't do. Idempotent — won't double-prepend.
+# ----------------------
+for _safe_path in "$HOME/.local/bin" "/usr/local/bin" "/usr/local/sbin" "/opt/nvim/bin"; do
+    if [ -d "$_safe_path" ]; then
+        case ":$PATH:" in
+            *":$_safe_path:"*) ;;
+            *) export PATH="$_safe_path:$PATH" ;;
+        esac
+    fi
+done
+unset _safe_path

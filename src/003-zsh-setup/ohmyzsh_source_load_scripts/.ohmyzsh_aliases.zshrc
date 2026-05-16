@@ -83,12 +83,12 @@ ssh_synnas_shell() {
 
 
 #======OPENROUTER=====================================================================
-babaji_aider_watch_with_OPENROUTER_API_KEY() {
+vishkrm_aider_watch_with_OPENROUTER_API_KEY() {
   export OPENROUTER_API_KEY=$(lpass show --notes AI_keys | yq '.AI | to_entries[].value.openrouter[0].key' | grep -v null | sed -e 's/"//g')
   aider --model openrouter/meta-llama/llama-3.1-405b-instruct:free --watch-files .
 }
 
-babaji_aider_watch_prompt_with_OPENROUTER_API_KEY() {
+vishkrm_aider_watch_prompt_with_OPENROUTER_API_KEY() {
   if [[ ! -f prompt.txt ]]; then
     echo "Error: prompt.txt not found."
     return 1
@@ -104,17 +104,19 @@ babaji_aider_watch_prompt_with_OPENROUTER_API_KEY() {
 }
 
 
-alias babaji_export_OPENROUTER_API_KEY="export OPENROUTER_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.openrouter[0].key' | grep -v null| sed -e 's/"//g')"
+alias vishkrm_export_OPENROUTER_API_KEY="export OPENROUTER_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.openrouter[0].key' | grep -v null| sed -e 's/"//g')"
 #======GEMINI=====================================================================
-babaji_aider_watch_with_GEMINI_API_KEY() {
+vishkrm_aider_watch_with_GEMINI_API_KEY() {
   export GEMINI_API_KEY=$(lpass show --notes AI_keys | yq '.AI | to_entries[].value.Gemini[0].key' | grep -v null | sed -e 's/"//g')
   aider --model gemini-exp  --watch-files .
 }
 
-alias babaji_export_GEMINI_API_KEY="export GEMINI_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.Gemini[0].key' | grep -v null| sed -e 's/"//g')"
+alias vishkrm_export_GEMINI_API_KEY="export GEMINI_API_KEY=$(lpass show --notes  AI_keys | yq  '.AI | to_entries[].value.Gemini[0].key' | grep -v null| sed -e 's/"//g')"
 
-# create alias as a help manual that shows all exported and aliased keys from this file, with short documentation to use, and also lets users search for and run one of the aliases or exports in this file
-babaji() {
+# Help manual for all exported and aliased keys from this file.
+# Renamed from babaji() to vishkrm_help() on 2026-05-15 to avoid colliding with
+# the /usr/local/bin/vishkrm shell-ai binary.
+vishkrm_help() {
   echo 'This is a help manual for all exported and aliased keys from this file.'
   echo 'You can search for and run one of the aliases or exports in this file.'
   grep -E '^alias|^export|^\w+\(\)\s*\{' ~/.zshrc | sed -e 's/alias //g' -e 's/export //g' -e 's/() {$//' | awk '{print $1}'

@@ -3,7 +3,7 @@
 # Displays available feature updates in the zsh prompt
 
 # Path to the feature update checker script
-FEATURE_UPDATE_CHECKER="/usr/local/lib/babaji-config/modules/feature-update-checker.sh"
+FEATURE_UPDATE_CHECKER="/usr/local/lib/vishkrm-config/modules/feature-update-checker.sh"
 
 # Function to get feature update status for prompt
 get_feature_updates_prompt() {
@@ -56,7 +56,7 @@ if [[ -n "$POWERLEVEL9K_VERSION" ]]; then
     }
 
     # Register the segment
-    typeset -g POWERLEVEL9K_FEATURE_UPDATES_SHOW_ON_COMMAND='check-updates|force-check|babaji-config'
+    typeset -g POWERLEVEL9K_FEATURE_UPDATES_SHOW_ON_COMMAND='check-updates|force-check|vishkrm-config'
 fi
 
 # For other themes, provide a function that can be called in PROMPT

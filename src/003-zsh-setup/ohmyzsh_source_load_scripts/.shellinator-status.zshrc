@@ -3,7 +3,7 @@
 # Shows current shellinator branch/source and integrates with feature updates
 
 # Path to the feature update checker script
-FEATURE_UPDATE_CHECKER="/usr/local/lib/babaji-config/modules/feature-update-checker.sh"
+FEATURE_UPDATE_CHECKER="/usr/local/lib/vishkrm-config/modules/feature-update-checker.sh"
 
 # Get shellinator branch/source info
 get_shellinator_branch() {
